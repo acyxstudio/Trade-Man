@@ -15,10 +15,11 @@ export default class Splash extends Phaser.Scene{
     }
 
     create(){
-        
+        const width = this.scale.width;
+        const height = this.scale.height;
         /** Add background and keep it from scroll down with the camera */
         this.add.image(360, 640, 'background_start').setScrollFactor(0,0);
- 
+        this.add.text(width * 0.5, height * 0.95, 'Press SPACE or TAP to continue', { color: '#444', fontSize: 32 , fontFamily:'Arial'}).setOrigin(0.5);
         /**
         * Restart game pressing space
         */

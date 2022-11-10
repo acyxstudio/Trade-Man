@@ -29,6 +29,15 @@ import Star from '../game/Star.js'
     
     /** @type {Phaser.GameObjects.Text} */
     scoreText;
+    
+    /** @type {Phaser.GameObjects.Sound} */
+    soundDead;
+    
+    /** @type {Phaser.GameObjects.Sound} */
+    soundHit;
+    
+    /** @type {Phaser.GameObjects.Sound} */
+    soundLevel;
 
     /**
      * General vars
@@ -90,7 +99,9 @@ import Star from '../game/Star.js'
         /**
          * load audio
          */
-        this.load.audio('jump', 'assets/Sfx/audio/phaseJump1.ogg');
+        this.load.audio('hit', 'assets/Sfx/audio/tone1.ogg');
+        this.load.audio('dead', 'assets/Sfx/audio/lowDown.ogg');
+        this.load.audio('level', 'assets/Sfx/audio/highDown.ogg');
          /**
           * Get keyboard keys
           */
@@ -114,7 +125,7 @@ import Star from '../game/Star.js'
          * Create n walls from the group
          */
         this.walls.create(360,27,'platform').setScale(2).refreshBody();
-        this.walls.create(360,700,'platform').setScale(2).refreshBody();
+        this.walls.create(360,910,'platform').setScale(2).refreshBody();
         /**
          * Create a Group of Blocks 
          */
@@ -153,7 +164,22 @@ import Star from '../game/Star.js'
         this.blocks.create(columnX[6], 520, 'block'); 
         this.blocks.create(columnX[6], 680, 'block');
         this.blocks.create(columnX[6], 840, 'block');
- 
+
+        /**
+        * Create bombs
+        */
+        this.bombs = this.physics.add.group();
+
+        /**
+        * Create bombs
+        */
+        this.ghosts = this.physics.add.group();
+        this.createGhost();
+         /**
+        * Create stamina
+        */
+        this.stamina = this.physics.add.group();
+    
         /**
          * Add player and set colliders with walls and check the corners
          */
@@ -163,6 +189,11 @@ import Star from '../game/Star.js'
 
         this.physics.add.collider(this.walls,this.player);
         this.physics.add.collider(this.blocks,this.player);
+
+        this.physics.add.collider(this.walls,this.ghosts);
+        this.physics.add.collider(this.blocks,this.ghosts);
+
+        this.physics.add.collider(this.player,this.ghosts,this.hitGhost,null,this);
         /**
          * Create stars 
          */
@@ -180,13 +211,13 @@ import Star from '../game/Star.js'
             for (let x=0; x<repetion; x++){
                 this.stars.get(starCol, starLine[i] , 'star');
                 starCol+=44;    
-            }    
-        }
+            }
+        }    
 
         this.stars.children.iterate(function(child){
             child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
         });
-        
+
         /**
          * Set the overlap of player with stars to collect them
          */        
@@ -198,16 +229,12 @@ import Star from '../game/Star.js'
             this
         );
         
-        /**
-        * Create bombs
+       /**
+        * Add audio to the game objects
         */
-        this.bombs = this.physics.add.group();
-
-        /**
-        * Create stamina
-        */
-        this.stamina = this.physics.add.group();
-        
+        this.soundDead = this.sound.add('dead',{volume:0.5});
+        this.soundHit = this.sound.add('hit',{volume:0.5});
+        this.soundLevel = this.sound.add('level',{volume:0.5});
         /**
          * Creating the UI 
          */
@@ -242,29 +269,23 @@ import Star from '../game/Star.js'
         this.player.setVelocityX(0);
         this.player.setVelocityY(0);
         }
-
-        this.walls.children.iterate(child => {
-            
-            /** @type {Phaser.Physics.Arcade.Sprite} */
-            const platform = child;
-            
-            const scrollY = this.cameras.main.scrollY;
-            
-            if (platform.y >= scrollY + 700){
-                platform.y = scrollY - Phaser.Math.Between(50, 100);
-                platform.body.updateFromGameObject();
-                
-            }
-        });
-
-        /**
-         * check game over
-         */
-      //  if (this.player.y > bottomPlatform.y + 200){
-          //  this.scene.start('game-over');
-        //}
+       
      }
 
+
+     /**
+      * Check Game Over
+      */
+     hitGhost(){
+        
+        this.physics.pause();
+
+        this.player.setTint(0xff0000);
+
+        this.soundDead.play();
+        
+        this.scene.start('game-over');
+     }
      /**
       * 
       * @param {Phaser.GameObjects.Sprite} sprite 
@@ -295,23 +316,39 @@ import Star from '../game/Star.js'
         this.scoreText.text = `Points: ${this.score}`;
         // add collected
         this.score++;
+        // play hit sound
+        this.soundHit.play();
+        // When stars count zero, rebuild stars and change level
+        if (this.stars.countActive(true)  === 0 ){
+            this.rebuildStars();
+            this.createGhost();
+            this.soundLevel.play();
+           }
     }
-    /**
-     * 
-     * @returns bottomPlatform
-     */
-    findBottomMostPlatform() {
-        const walls = this.walls.getChildren();
-        let bottomPlatform = walls[0];
 
-        for (let i = 1; i < walls.length; ++i) {
-            const platform = walls[i];
-            // discard any walls that are above current
-            if (platform.y < bottomPlatform.y){
-                continue;
-            }
-            bottomPlatform = platform;
-        }
-        return bottomPlatform;
+    /**
+     * Re-enable stars in scene
+     */
+    rebuildStars() {
+        this.stars.children.iterate(function(child) {
+            child.enableBody(true, child.x,child.y, true, true);
+        });
+    }
+    
+    /**
+    * Create Ghost in scene
+    */
+    createGhost(){
+
+        let x = (this.spawnEnemies) ? Phaser.Math.Between(10, 25) : Phaser.Math.Between(680, 720);
+
+        var ghost = this.ghosts.create(x,80, 'ghost');
+        ghost.setBounce(1);
+        ghost.setCollideWorldBounds(true);
+        ghost.setVelocity(Phaser.Math.Between(-260, 260), 20);
+        ghost.allowGravity = false;
+        
+        this.spawnEnemies = !this.spawnEnemies;
+
     }
  }
