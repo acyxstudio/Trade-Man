@@ -102,9 +102,9 @@ import Star from '../game/Star.js'
         /**
          * load audio
          */
-        this.load.audio('hit', 'assets/Sfx/audio/tone1.ogg');
-        this.load.audio('dead', 'assets/Sfx/audio/lowDown.ogg');
-        this.load.audio('level', 'assets/Sfx/audio/highDown.ogg');
+        this.load.audio('hit', 'assets/Sfx/Audio/tone1.ogg');
+        this.load.audio('dead', 'assets/Sfx/Audio/lowDown.ogg');
+        this.load.audio('level', 'assets/Sfx/Audio/highDown.ogg');
          /**
           * Get keyboard keys
           */
