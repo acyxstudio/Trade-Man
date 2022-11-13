@@ -19,4 +19,10 @@ export default class GameOver extends Phaser.Scene{
             this.scene.start('splash-scene');
         });
     }
+
+    update() {
+        if(this.input.activePointer.isDown ){
+            this.scene.start('splash-scene');
+        }   
+    }
 }

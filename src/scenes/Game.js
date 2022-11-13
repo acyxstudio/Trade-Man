@@ -45,6 +45,9 @@ import Star from '../game/Star.js'
     score = 0;
     spawnEnemies = false;
     scaleRate = window.devicePixelRatio / 3;
+    tapScreen = false;
+    touchX = 0.0;
+    touchY = 0.0;    
     
     constructor()
     {
@@ -228,7 +231,16 @@ import Star from '../game/Star.js'
             null,
             this
         );
-        
+
+        /*
+        * ativates touch
+        */
+        this.input.on('pointerdown', function(pointer){
+            this.tapScreen  = true;
+            this.touchX     = pointer.x;
+            this.touchY     = pointer.y;     
+        }, this);
+
        /**
         * Add audio to the game objects
         */
@@ -240,43 +252,74 @@ import Star from '../game/Star.js'
          */
         const style = { color: '#000', fontSize: 32 , fontFamily:'Arial'};
         this.scoreText = this.add.text(100 , 1200, 'Points: 0', style).setScrollFactor(0).setOrigin(0.5, 0);
-       
+     
     } 
 
      update(){
         
-       
-        // left and right input logic
         if (this.cursors.left.isDown)
         {
-            this.player.setVelocityX(-200);
+            movePlayer('left');
         }
         else if (this.cursors.right.isDown)
         {
-            this.player.setVelocityX(200);
+            this.movePlayer('right');
         }
         else if (this.cursors.up.isDown)
         {
-            this.player.setVelocityY(-200);
+            this.movePlayer('up');
         }  
         else if (this.cursors.down.isDown)
         {
-            this.player.setVelocityY(200);
+            this.movePlayer('down');
         }
         else
         {
-        // stop movement if not left or right
-        this.player.setVelocityX(0);
-        this.player.setVelocityY(0);
+            this.stopPlayer();
         }
-       
+
+        if (this.tapScreen) {
+            if (this.touchY>1035 && this.touchY<1140 && this.touchX<360) { this.movePlayer('left'); }
+            if (this.touchY>1035 && this.touchY<1140 && this.touchX>370) { this.movePlayer('right');}
+            if (this.touchX>300 && this.touchX<400 &&  this.touchY<1035) { this.movePlayer('up');   }
+            if (this.touchX>300 && this.touchX<400 &&  this.touchY>1140) { this.movePlayer('down'); }
+        }
      }
 
+    /**
+     * Move Player
+     */
+    movePlayer(direction){
+        switch(direction) {
+            case 'left':
+                this.player.setVelocityX(-200);
+                break;
+            case 'right':
+                this.player.setVelocityX(200);
+                break;
+            case 'up':
+                this.player.setVelocityY(-200);
+                break;
+            case 'down':
+                this.player.setVelocityY(200);
+                break;
+            default:             
+                this.stopPlayer();
+        }
+     }
 
-     /**
-      * Check Game Over
-      */
-     hitGhost(){
+    /**
+     * Stop Player
+     */
+    stopPlayer() {
+        this.player.setVelocityX(0);
+        this.player.setVelocityY(0);
+     }
+
+    /**
+     * Check Game Over
+     */
+    hitGhost(){
         
         this.physics.pause();
 
